@@ -1,0 +1,15 @@
+using System;
+using System.IO;
+using System.Threading.Tasks;
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using UndertaleModLib.Util;
+using ImageMagick;
+using Newtonsoft.Json;
+using System.Text.RegularExpressions;
+using UndertaleModLib;
+using UndertaleModLib.Models;
+using static UndertaleModLib.Models.UndertaleSound;
+using static UndertaleModLib.UndertaleData;
