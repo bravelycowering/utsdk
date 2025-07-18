@@ -323,9 +323,9 @@ local function build()
 		umtlogger = function(err, data)
 			if data then
 				if data:starts("%RUNNER:") and not project.runner then
-					local f = io.open(path(bin, ".runner"), "w+")
+					local f = io.open(path(bin, ".runner"), "w+b")
 					if f then
-						local runner = data:gsub("^%%RUNNER:",""):gsub("\n", "")
+						local runner = data:gsub("^%%RUNNER:",""):gsub("\r?\n", "")..".exe"
 						project.runner = path(project.game, runner)
 						f:write(project.runner)
 						f:close()
@@ -339,9 +339,9 @@ local function build()
 		umtlogger = function(err, data)
 			if data then
 				if data:starts("%RUNNER:") and not project.runner then
-					local f = io.open(path(bin, ".runner"), "w+")
+					local f = io.open(path(bin, ".runner"), "w+b")
 					if f then
-						local runner = data:gsub("^%%RUNNER:",""):gsub("\n", "")
+						local runner = data:gsub("^%%RUNNER:",""):gsub("\r?\n", "")..".exe"
 						project.runner = path(project.game, runner)
 						f:write(project.runner)
 						f:close()
@@ -407,8 +407,8 @@ end
 
 local function launch()
 	if not project.runner then
-		local f = assert(io.open(path(bin, ".runner"), "r+"), "ERROR: Could not find a valid game runner\nPlease add a 'runner' property to project.json")
-		project.runner = f:read("*all"):gsub("[\n\x0d]", "")
+		local f = assert(io.open(path(bin, ".runner"), "r+b"), "ERROR: Could not find a valid game runner\nPlease add a 'runner' property to project.json")
+		project.runner = f:read("*all")
 		f:close()
 	end
 	return execute(path(project.game, project.runner), {
