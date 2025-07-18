@@ -1,5 +1,3 @@
-EnsureDataLoaded();
-
 try {
 	string source = Environment.GetEnvironmentVariable("Source");
 	if (source == null) {
@@ -7,13 +5,11 @@ try {
 	} else {
 		ScriptMessage("%RUNNER:"+Data.GeneralInfo.FileName.Content);
 
-		string gi_name = Environment.GetEnvironmentVariable("GeneralInfo/Name");
-		if (gi_name != null)
-			Data.GeneralInfo.Name = Data.Strings.MakeString(gi_name);
+		if (GeneralInfo_Name != null)
+			Data.GeneralInfo.Name = Data.Strings.MakeString(GeneralInfo_Name);
 
-		string gi_displayname = Environment.GetEnvironmentVariable("GeneralInfo/DisplayName");
-		if (gi_displayname != null)
-			Data.GeneralInfo.DisplayName = Data.Strings.MakeString(gi_displayname);
+		if (GeneralInfo_DisplayName != null)
+			Data.GeneralInfo.DisplayName = Data.Strings.MakeString(GeneralInfo_DisplayName);
 		
 		string importFolder = Path.Join(Directory.GetCurrentDirectory(), source);
 
@@ -26,8 +22,9 @@ try {
 		await importGML(importFolder);
 
 		DisableAllSyncBindings();
+
+		Environment.SetEnvironmentVariable("do_save", "true");
 	}
 } catch(Exception e) {
-	ScriptMessage("[31m"+e.Message+"[0m");
-	Environment.Exit(1);
+	ScriptMessage(e.Message);
 }

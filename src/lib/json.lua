@@ -176,6 +176,7 @@ function json.parse(str, pos, end_delim)
 	else	-- Parse true, false, or null.
 		local literals = {['true'] = true, ['false'] = false, ['null'] = json.null}
 		for lit_str, lit_val in pairs(literals) do
+			if lit_val == json.null then lit_val = nil end
 			local lit_end = pos + #lit_str - 1
 			if str:sub(pos, lit_end) == lit_str then return lit_val, lit_end + 1 end
 		end
