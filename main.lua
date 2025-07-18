@@ -1,5 +1,6 @@
 local luvi = require "luvi"
 
+-- require fixer
 package.loaders[#package.loaders+1] = function(modname)
 	local modpath = modname:gsub("%.+", "/")..".lua"
 	local stat = luvi.bundle.stat(modpath)
@@ -14,8 +15,10 @@ package.loaders[#package.loaders+1] = function(modname)
 	end
 end
 
-local json = require "json"
 local uv = require "uv"
+local json = require "json"
+
+local MAJOR, MINOR, PATCH = 0,1,0
 
 local project
 local argi, noflags, flags = 1, true, {
@@ -23,6 +26,7 @@ local argi, noflags, flags = 1, true, {
 	build = false,
 	launch = false,
 	verbose = false,
+	version = false,
 }
 
 local function exit(code, msg)
@@ -161,19 +165,16 @@ local function confirm(question)
 end
 
 local bin = ".bin"
-local exepath = uv.exepath()
 
-exepath = [[C:\Program Files\DeltaruneModdingSDK\utsdk.exe]]
-
-local programfiles = path(exepath, "..")
-local exename = exepath:gsub("^.+[%/%\\]", ""):gsub("%.[^%.]+$", "")
-
+local exename = uv.exepath():gsub("^.+[%/%\\]", ""):gsub("%.[^%.]+$", "")
 local appdata = path(os.getenv("appdata"), "UndertaleModdingSDK")
+
+local umcli_version = "none"
+
 local function dependancies()
 	local xdelta3_missing = true
 	local umcli_missing = true
 	local umcli_wanted_version = "1.0.0+473b731a8d16b75ac889972466470dc05d9c90ed"
-	local umcli_current_version = "none"
 	if uv.fs_stat(appdata) then
 		if uv.fs_stat(path(appdata, "UndertaleModCli")) and uv.fs_stat(path(appdata, "UndertaleModCli/UndertaleModCli.exe")) then
 			umcli_missing = false
@@ -181,10 +182,10 @@ local function dependancies()
 				if not data then return end
 				local v = data:gsub("%s+", "")
 				if #v > 0 then
-					umcli_current_version = v
+					umcli_version = v
 				end
 			end)
-			if umcli_current_version ~= umcli_wanted_version then
+			if umcli_version ~= umcli_wanted_version then
 				umcli_missing = true
 			end
 		else
@@ -195,7 +196,7 @@ local function dependancies()
 		mkdir(appdata)
 	end
 	if umcli_missing or xdelta3_missing then
-		if umcli_current_version == "none" or xdelta3_missing then
+		if umcli_version == "none" or xdelta3_missing then
 			print("\n"..exename.." is missing the following binaries and needs them to function properly\n")
 		else
 			print("There is an update available for the following binaries")
@@ -428,6 +429,7 @@ Options:
 	-l, --launch           Launch mod from input directory
 	-v, --verbose          Detailed logs
 	-x, --create-patch     Create .xdelta patch
+	--version              Show version information
 	-?, -h, --help         Show help and usage information
 ]])
 	return 0
@@ -449,6 +451,9 @@ local function setflag(name)
 		return false
 	elseif name == "x" or name == "create-patch" then
 		flags.create_patch = true
+		return false
+	elseif name == "version" then
+		flags.version = true
 		return false
 	else
 		exit(1, "Unknown flag '"..name.."'")
@@ -482,10 +487,17 @@ local function main()
 		print("No options provided. (Try '"..exename.." -?' for help information)")
 		return 0
 	end
-	project = readproject(source)
+	if flags.version then
+		print("utsdk: "..MAJOR.."."..MINOR.."."..PATCH.."-"..(type(luvi.bundle.stat("main.lua").mtime) == "number" and luvi.bundle.stat("main.lua").mtime or "source"))
+		print("umcli: "..umcli_version)
+		print("luvi:  "..luvi.version)
+		print("jit:   "..jit.version_num)
+		return 0
+	end
 	if flags.help then
 		return help()
 	end
+	project = readproject(source)
 	if flags.build then
 		build()
 	end
