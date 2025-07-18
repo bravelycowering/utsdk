@@ -3,32 +3,8 @@ local fs = require "lib.fs"
 local log = require "lib.log"
 local json = require "lib.json"
 
-local function forceremove(dir) -- todo: replace this function
-	local uv = require "uv"
-	local success, err, d
-	success, err = uv.fs_rmdir(dir)
-	if success then
-		return success, err
-	end
-	d, err = uv.fs_opendir(dir)
-	if not d then return d, err end
-	local entries = {}
-	repeat
-		success, err = uv.fs_readdir(d)
-		if success then
-			for i = 1, #success do
-				local entry = success[i]
-				if entry.type == "file" then
-					os.remove(fs.path(dir, entry.name))
-				elseif entry.type == "directory" then
-					forceremove(fs.path(dir, entry.name))
-				end
-			end
-		end
-	until not success
-	uv.fs_closedir(d)
-	uv.fs_rmdir(dir)
-	return true, ""
+local function starts_with(str, start)
+	return string.sub(str, 1, string.len(start)) == start
 end
 
 local function create_csx(project)
@@ -64,8 +40,8 @@ local function create_csx(project)
 end
 
 local function build(project)
-	local success, err = forceremove(project.output)
-	log.assert(success or err:starts("ENOENT"), "ERROR: Could not remove directory "..project.output.."\n"..tostring(err))
+	local success, err = fs.delete(project.output, true)
+	log.assert(success, "ERROR: Could not remove directory "..project.output.."\n"..tostring(err))
 
 	success, err = fs.mkdir(project.output)
 	log.assert(success, "ERROR: Could not create directory "..project.output.."\n"..tostring(err))
@@ -82,15 +58,21 @@ local function build(project)
 		log.assert(success, "ERROR: Could not create juncture from "..from.." to "..to.."\n"..tostring(err))
 	end
 
+	local function processmsgs(err, data)
+		if starts_with(data, "%RUNNER:") and not project.runner then
+			local runner = data:gsub("^%%RUNNER:",""):gsub("\r?\n", "")..".exe"
+			project.runner = fs.path(project.game, runner)
+			fs.write(fs.path(project.output, ".runner"), project.runner)
+		end
+		if starts_with(data, "%ERROR:") then
+			-- TODO: make compilation errors pretty print
+		end
+	end
 	local umtlogger
 	if flags.verbose then
 		umtlogger = function(err, data)
 			if data then
-				if data:starts("%RUNNER:") and not project.runner then
-					local runner = data:gsub("^%%RUNNER:",""):gsub("\r?\n", "")..".exe"
-					project.runner = fs.path(project.game, runner)
-					fs.write(fs.path(project.output, ".runner"), project.runner)
-				end
+				processmsgs(err, data)
 				io.write(data)
 			end
 		end
@@ -98,20 +80,17 @@ local function build(project)
 		local shouldclear = false
 		umtlogger = function(err, data)
 			if data then
-				if data:starts("%RUNNER:") and not project.runner then
-					local runner = data:gsub("^%%RUNNER:",""):gsub("\r?\n", "")..".exe"
-					project.runner = fs.path(project.game, runner)
-					fs.write(fs.path(project.output, ".runner"), project.runner)
-				end
-				if data:starts("[") then
+				processmsgs(err, data)
+				if starts_with(data, "[") then
 					shouldclear = true
 					io.write("\x1b[s\x1b[2K"..data:gsub("\n", "").."\x1b[u")
 				elseif
-					not data:starts("%RUNNER:") and
-					not data:starts("Trying to load file: ") and
-					not data:starts("Attempting to execute ") and
-					not data:starts("Finished executing ") and
-					not data:starts("Saving new data file to ")
+					not starts_with(data, "%RUNNER:") and
+					not starts_with(data, "%ERROR:") and
+					not starts_with(data, "Trying to load file: ") and
+					not starts_with(data, "Attempting to execute ") and
+					not starts_with(data, "Finished executing ") and
+					not starts_with(data, "Saving new data file to ")
 				then
 					if shouldclear then
 						io.write("\x1b[2K")

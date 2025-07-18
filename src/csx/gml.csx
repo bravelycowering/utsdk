@@ -7,12 +7,6 @@ static string years = (Math.Floor(totalseconds / 60 / 60 / 24 / 365)).ToString()
 
 static string currentCodeName = "";
 
-static string BUILD_VERSION = years + "." + days + "." + hours + "." + minutes + "." + seconds;
-static string macros =
-	"#macro BUILD_VERSION \""+BUILD_VERSION+"\"" + "\n" +
-	"#macro BUILD_TIME "+totalseconds.ToString() + "\n"
-;
-
 GlobalDecompileContext globalDecompileContext = new(Data);
 Underanalyzer.Decompiler.IDecompileSettings decompilerSettings = Data.ToolInfo.DecompilerSettings;
 
@@ -47,7 +41,7 @@ public string PreProcessResolver(Match m) {
 public string PreProcess(string str) {
 	string pattern = @"^#(\w+)[ \t]*(.*)";
 	Regex r = new Regex(pattern, RegexOptions.Multiline);
-	return r.Replace(macros + str, new MatchEvaluator(PreProcessResolver));
+	return r.Replace(str, new MatchEvaluator(PreProcessResolver));
 }
 
 public static string ReplaceFirst(string str, string term, string replace)
@@ -117,22 +111,10 @@ async Task importGML(string folder) {
 						Data.GameObjects.Add(obj);
 					}
 					UndertaleCode code = obj.EventHandlerFor((EventType)eventtypeid, eventsubtype, Data);
-					if (contents.StartsWith("#append")) {
-						importGroup.QueueAppend(code, macros + ReplaceFirst(contents, "#append", ""));
-					} else if (contents.StartsWith("#prepend")) {
-						importGroup.QueuePrepend(code, macros + ReplaceFirst(contents, "#prepend", ""));
-					} else {
-						importGroup.QueueReplace(code, PreProcess(contents));
-					}
+					importGroup.QueueReplace(code, PreProcess(contents));
 					continue;
 				}
-				if (contents.StartsWith("#append")) {
-					importGroup.QueueAppend(file.Item2, macros + ReplaceFirst(contents, "#append", ""));
-				} else if (contents.StartsWith("#prepend")) {
-					importGroup.QueuePrepend(file.Item2, macros + ReplaceFirst(contents, "#prepend", ""));
-				} else {
-					importGroup.QueueReplace(file.Item2, PreProcess(contents));
-				}
+				importGroup.QueueReplace(file.Item2, PreProcess(contents));
 			}
 			importGroup.Import();
 		}

@@ -2,6 +2,23 @@ local uv = require "uv"
 
 local fs = {}
 
+function fs.readdir(dname)
+	local success, err, dir
+	dir, err = uv.fs_opendir(dname)
+	if not dir then return dir, err end
+	local entries = {}
+	repeat
+		success = uv.fs_readdir(dir)
+		if success then
+			for i = 1, #success do
+				entries[#entries+1] = success[i]
+			end
+		end
+	until not success
+	uv.fs_closedir(dir)
+	return entries
+end
+
 function fs.read(fname)
 	local contents
 	local f = io.open(fname, "rb")
@@ -30,12 +47,28 @@ function fs.junction(from, to)
 	return uv.fs_symlink(from, to, { junction = true })
 end
 
-function fs.delete(fname)
-	uv.fs_unlink(fname)
+function fs.delete(fname, recursive)
+	local stat, err = fs.stat(fname)
+	if stat then
+		if stat.type == "directory" then
+			if recursive then
+				for index, file in ipairs(fs.readdir(fname)) do
+					local success, err = fs.delete(fs.path(fname, file.name), true)
+					if not success then
+						return success, err
+					end
+				end
+			end
+			return uv.fs_rmdir(fname)
+		else
+			return uv.fs_unlink(fname)
+		end
+	end
+	return true
 end
 
 function fs.stat(fname)
-	return uv.fs_stat(fname)
+	return uv.fs_lstat(fname)
 end
 
 function fs.mkdir(dname)
@@ -54,6 +87,8 @@ function fs.exists(fname, ftype)
 		return stat and stat.type == "file"
 	elseif ftype == "directory" then
 		return stat and stat.type == "directory"
+	elseif ftype == "link" then
+		return stat and stat.type == "link"
 	end
 	return false
 end

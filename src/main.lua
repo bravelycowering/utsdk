@@ -28,5 +28,7 @@ if #arg == 0 then
 	end
 end
 
+local uv = require "uv"
+
 -- run cli tool
 return require "cli.main"
