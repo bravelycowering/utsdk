@@ -52,10 +52,10 @@ local function build(project)
 		log.assert(success, "ERROR: Could not copy file "..from.." to "..to.."\n"..tostring(err))
 	end
 
-	for k, v in pairs(project.juncture) do
+	for k, v in pairs(project.link) do
 		local from, to = fs.path(project.game, v), fs.path(project.output, k)
 		success, err = fs.junction(from, to)
-		log.assert(success, "ERROR: Could not create juncture from "..from.." to "..to.."\n"..tostring(err))
+		log.assert(success, "ERROR: Could not create link from "..from.." to "..to.."\n"..tostring(err))
 	end
 
 	local function processmsgs(err, data)

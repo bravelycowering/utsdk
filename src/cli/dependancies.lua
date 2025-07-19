@@ -1,5 +1,5 @@
 local fs = require "lib.fs"
-local util = require "lib.util"
+local input = require "lib.input"
 local version = require "cli.version"
 
 local checked_dependancies = false
@@ -45,7 +45,7 @@ local function dependancies()
 			print("    xdelta (https://github.com/jmacd/xdelta-gpl)")
 		end
 		print("\nWould you like to download them now? (Y/N) ")
-		if util.confirm() then
+		if input.confirm() then
 			if umcli_missing then
 				print("Downloading UndertaleModCli...")
 				fs.execute("curl", {

@@ -1,8 +1,8 @@
 local uv = require "uv"
 
-local util = {}
+local input = {}
 
-function util.confirm()
+function input.confirm()
 	local yes = false
 	local stdin = uv.new_tty(0, true)
 	uv.tty_set_mode(stdin, "raw")
@@ -25,7 +25,7 @@ function util.confirm()
 	return yes
 end
 
-function util.select(options)
+function input.select(options)
 	local option = nil
 	local stdin = uv.new_tty(0, true)
 	uv.tty_set_mode(stdin, "raw")
@@ -53,7 +53,7 @@ function util.select(options)
 	return option
 end
 
-function util.prompt()
+function input.prompt()
 	local input = nil
 	local stdin = uv.new_tty(0, true)
 	stdin:read_start(function(err, data)
@@ -65,4 +65,4 @@ function util.prompt()
 	return input
 end
 
-return util
+return input

@@ -9,6 +9,7 @@ local launch = require "cli.launch"
 local create_patch = require "cli.create_patch"
 local dependancies = require "cli.dependancies"
 local build = require "cli.build"
+local init = require "cli.init"
 
 local assert = log.assert
 
@@ -24,7 +25,7 @@ local function readproject(source)
 	assert(type(project) == "table" and json.type(project) == "table", "ERROR: Incorrectly formatted project.json\ni dont feel like writing an error message for this one")
 	assert(json.type(project.game) == "array", "ERROR: Incorrectly formatted project.json\n\"game\" must be an array of paths")
 	assert(json.type(project.copy) == "table", "ERROR: Incorrectly formatted project.json\n\"copy\" must be an object containing files to copy")
-	assert(json.type(project.juncture) == "table", "ERROR: Incorrectly formatted project.json\n\"juncture\" must be an object containing files to create junctures")
+	assert(json.type(project.link) == "table", "ERROR: Incorrectly formatted project.json\n\"link\" must be an object containing files to create links")
 	assert(json.type(project.data) == "string", "ERROR: Incorrectly formatted project.json\n\"data\" must be a path to the data.win file to patch")
 	assert(json.type(project.output) == "string", "ERROR: Incorrectly formatted project.json\n\"bin\" must be a path to the output folder")
 	assert(json.type(project.GeneralInfo) == "table" or json.type(project.GeneralInfo) == "nil", "ERROR: Incorrectly formatted project.json\n\"GeneralInfo\" must be a table or be omitted")
@@ -55,6 +56,7 @@ Options:
 	-l, --launch           Launch mod from source directory
 	-v, --verbose          Detailed logs
 	-x, --create-patch     Create .xdelta patch
+	--init                 Create new project at source directory
 	--version              Show version information
 	-?, -h, --help         Show help and usage information
 ]])
@@ -81,25 +83,25 @@ local function main()
 	if flags.help then
 		return help()
 	end
-	local did_nothing = true
+	if flags.init then
+		return init()
+	end
+	local did_nothing = not (flags.build or flags.create_patch or flags.launch)
+	if did_nothing then
+		print("No options provided. (Try '"..fs.exename.." -?' for help information)")
+		return 0
+	end
 	local project = readproject(source)
 	if flags.build then
-		did_nothing = false
 		dependancies()
 		build(project)
 	end
 	if flags.create_patch then
-		did_nothing = false
 		dependancies()
 		create_patch(project)
 	end
 	if flags.launch then
-		did_nothing = false
 		launch(project)
-	end
-	if did_nothing then
-		print("No options provided. (Try '"..fs.exename.." -?' for help information)")
-		return 0
 	end
 end
 

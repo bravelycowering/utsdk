@@ -5,6 +5,7 @@ _G.flags = {
 	verbose = false,
 	create_patch = false,
 	version = false,
+	init = false,
 }
 
 _G.arg = {[0]=args[0]}
@@ -29,6 +30,9 @@ local function setflag(name)
 		return false
 	elseif name == "version" then
 		flags.version = true
+		return false
+	elseif name == "init" then
+		flags.init = true
 		return false
 	else
 		print("Unknown option '"..name.."'")
