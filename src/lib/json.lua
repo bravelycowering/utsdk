@@ -50,8 +50,8 @@ end
 json.type = kind_of
 
 local function escape_str(s)
-	local in_char	= {'\\', '"', '/', '\b', '\f', '\n', '\r', '\t'}
-	local out_char = {'\\', '"', '/',	'b',	'f',	'n',	'r',	't'}
+	local in_char	= {'\\', '"', '\b', '\f', '\n', '\r', '\t'}
+	local out_char = {'\\', '"',	'b',	'f',	'n',	'r',	't'}
 	for i, c in ipairs(in_char) do
 		s = s:gsub(c, '\\' .. out_char[i])
 	end
@@ -100,27 +100,28 @@ end
 
 -- Public values and functions.
 
-function json.stringify(obj, as_key)
+function json.stringify(obj, indent, as_key)
+	indent = indent or ""
 	local s = {}	-- We'll build the string as an array of strings to be concatenated.
 	local kind = kind_of(obj)	-- This is 'array' if it's an array or type(obj) otherwise.
 	if kind == 'array' then
 		if as_key then error('Can\'t encode array as key.') end
-		s[#s + 1] = '['
+		s[#s + 1] = '[\n'
 		for i, val in ipairs(obj) do
-			if i > 1 then s[#s + 1] = ', ' end
-			s[#s + 1] = json.stringify(val)
+			if i > 1 then s[#s + 1] = ',\n' end
+			s[#s + 1] = indent.."\t"..json.stringify(val, indent.."\t")
 		end
-		s[#s + 1] = ']'
+		s[#s + 1] = "\n"..indent..']'
 	elseif kind == 'table' then
 		if as_key then error('Can\'t encode table as key.') end
-		s[#s + 1] = '{'
+		s[#s + 1] = '{\n'
 		for k, v in pairs(obj) do
-			if #s > 1 then s[#s + 1] = ', ' end
-			s[#s + 1] = json.stringify(k, true)
-			s[#s + 1] = ':'
-			s[#s + 1] = json.stringify(v)
+			if #s > 1 then s[#s + 1] = ',\n' end
+			s[#s + 1] = indent.."\t"..json.stringify(k, indent.."\t", true)
+			s[#s + 1] = ': '
+			s[#s + 1] = json.stringify(v, indent.."\t")
 		end
-		s[#s + 1] = '}'
+		s[#s + 1] = "\n"..indent..'}'
 	elseif kind == 'string' then
 		return '"' .. escape_str(obj) .. '"'
 	elseif kind == 'number' then

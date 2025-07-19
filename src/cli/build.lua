@@ -22,8 +22,8 @@ local function create_csx(project)
 			local statics = {}
 			local strings = {"Name", "DisplayName"}
 			for i = 1, #strings do
-				local k, v = strings[i], project.GeneralInfo[strings[i]]
-				if v ~= nil then
+				local k, v = strings[i], project.GeneralInfo and project.GeneralInfo[strings[i]]
+				if v then
 					log.assert(type(v) == "string", "ERROR: Incorrectly formatted project.json\n\"GeneralInfo."..k.."\" must be a string value")
 					statics[#statics+1] = "static string GeneralInfo_"..k.." = "..json.stringify(v)..";"
 				else

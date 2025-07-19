@@ -83,11 +83,14 @@ local function main()
 	if flags.help then
 		return help()
 	end
+	local do_nothing = not (flags.build or flags.create_patch or flags.launch)
 	if flags.init then
-		return init()
+		init(source)
+		if do_nothing then
+			return 0
+		end
 	end
-	local did_nothing = not (flags.build or flags.create_patch or flags.launch)
-	if did_nothing then
+	if do_nothing then
 		print("No options provided. (Try '"..fs.exename.." -?' for help information)")
 		return 0
 	end

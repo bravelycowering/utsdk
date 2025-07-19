@@ -1,4 +1,4 @@
-# <img src="icon.png" style="vertical-align: bottom"/> UTSDK
+# UTSDK
 
 ### TODO List
 
