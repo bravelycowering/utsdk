@@ -3,7 +3,7 @@
 ### TODO List
 
 - [ ] Write a better README.md
-- [x] Add functionality for creating new projects via `utsdk --init`
+- [x] ~~Add functionality for creating new projects via `utsdk --init`~~
 - [ ] Add a sub command for deleting all data associated with the tool
 - [ ] More customizability to project structure
 - [ ] Support for modifying
